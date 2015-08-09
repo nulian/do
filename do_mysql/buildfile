@@ -14,14 +14,14 @@ define 'do_mysql' do
 
   manifest['Copyright'] = 'Alex Coles (C) 2008-2011'
 
-  compile.using :target => '1.5', :lint => 'all', :deprecation => 'true'
+  compile.using :lint => 'all', :deprecation => 'true'
 
   define 'ext-java' do
     package(:jar).clean.include(TARGET_DIR)
-        
+
     jdbc_support_jar = file('../../do_jdbc/lib/do_jdbc_internal.jar')
     jdbc_support = artifact('data_objects:jdbc:jar:1.0').from(jdbc_support_jar)
-    
+
     compile.into(TARGET_DIR).with(JDBC_SUPPORT)
   end
 end

@@ -24,6 +24,8 @@ require 'data_objects/spec/setup'
 require 'data_objects/spec/lib/ssl'
 require 'data_objects/spec/lib/pending_helpers'
 require 'do_mysql'
+require File.expand_path(File.join(File.dirname(__FILE__), 'do_mock'))
+require File.expand_path(File.join(File.dirname(__FILE__), 'do_mock2'))
 
 DataObjects::Mysql.logger = DataObjects::Logger.new(STDOUT, :off)
 at_exit { DataObjects.logger.flush }
