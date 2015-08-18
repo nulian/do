@@ -38,13 +38,13 @@ shared_examples_for 'a Connection' do
 
     it 'should open with an uri object' do
       uri = DataObjects::URI.new(
-              :scheme   => @driver,
-              :user     => @user,
-              :password => @password,
-              :host     => @host,
-              :port     => @port && @port.to_i,
-              :path     => @database
-            )
+          :scheme   => @driver,
+          :user     => @user,
+          :password => @password,
+          :host     => @host,
+          :port     => @port && @port.to_i,
+          :path     => @database
+      )
       conn = DataObjects::Connection.new(uri)
       test_connection(conn).should == 1
       conn.close
@@ -186,53 +186,56 @@ shared_examples_for 'a Connection via JDNI' do
       require 'do_jdbc/spec/lib/javaee-api-6.0.jar'
       require 'do_jdbc/spec/lib/commons-dbcp-1.2.2.jar'
       require 'do_jdbc/spec/lib/commons-pool-1.3.jar'
-    rescue LoadError
-      pending 'JNDI specs currently require manual download of Tyrex and Apache Commons JARs'
-      break
+    rescue LoadError => e
+      JNDI_PENDING = 'JNDI specs currently require manual download of Tyrex and Apache Commons JARs'
     end
 
-    describe 'connecting with JNDI' do
+    if defined?(JNDI_PENDING)
+      pending(JNDI_PENDING)
+    else
+      describe 'connecting with JNDI' do
 
-      before(:all) do
-        java_import java.lang.System
-        java_import javax.naming.Context
-        java_import javax.naming.NamingException
-        java_import javax.naming.Reference
-        java_import javax.naming.StringRefAddr
-        java_import 'tyrex.naming.MemoryContext'
-        java_import 'tyrex.tm.RuntimeContext'
+        before(:all) do
+          java_import java.lang.System
+          java_import javax.naming.Context
+          java_import javax.naming.NamingException
+          java_import javax.naming.Reference
+          java_import javax.naming.StringRefAddr
+          java_import 'tyrex.naming.MemoryContext'
+          java_import 'tyrex.tm.RuntimeContext'
 
-        System.set_property(Context.INITIAL_CONTEXT_FACTORY, 'tyrex.naming.MemoryContextFactory')
-        ref  = Reference.new('javax.sql.DataSource',
-                             'org.apache.commons.dbcp.BasicDataSourceFactory', nil)
-        ref.add(StringRefAddr.new('driverClassName',  CONFIG.jdbc_driver))
-        ref.add(StringRefAddr.new('url',              (CONFIG.jdbc_uri || CONFIG.uri)))
-        ref.add(StringRefAddr.new('username',         CONFIG.user))
-        ref.add(StringRefAddr.new('password',         CONFIG.pass))
+          System.set_property(Context.INITIAL_CONTEXT_FACTORY, 'tyrex.naming.MemoryContextFactory')
+          ref  = Reference.new('javax.sql.DataSource',
+                               'org.apache.commons.dbcp.BasicDataSourceFactory', nil)
+          ref.add(StringRefAddr.new('driverClassName',  CONFIG.jdbc_driver))
+          ref.add(StringRefAddr.new('url',              (CONFIG.jdbc_uri || CONFIG.uri)))
+          ref.add(StringRefAddr.new('username',         CONFIG.user))
+          ref.add(StringRefAddr.new('password',         CONFIG.pass))
 
-        @root = MemoryContext.new(nil)
-        ctx   = @root.createSubcontext('comp')
-        ctx   = ctx.createSubcontext('env')
-        ctx   = ctx.createSubcontext('jdbc')
-        ctx.bind('mydb', ref)
-      end
+          @root = MemoryContext.new(nil)
+          ctx   = @root.createSubcontext('comp')
+          ctx   = ctx.createSubcontext('env')
+          ctx   = ctx.createSubcontext('jdbc')
+          ctx.bind('mydb', ref)
+        end
 
-      before do
-        runCtx = RuntimeContext.newRuntimeContext(@root, nil)
-        RuntimeContext.setRuntimeContext(runCtx)
-      end
+        before do
+          runCtx = RuntimeContext.newRuntimeContext(@root, nil)
+          RuntimeContext.setRuntimeContext(runCtx)
+        end
 
-      after do
-        RuntimeContext.unsetRuntimeContext()
-      end
+        after do
+          RuntimeContext.unsetRuntimeContext()
+        end
 
-      it 'should connect' do
-        begin
-          c = DataObjects::Connection.new("java:comp/env/jdbc/mydb?driver=#{CONFIG.driver}")
-          c.should_not be_nil
-          test_connection(c).should == 1
-        ensure
-          c.close if c
+        it 'should connect' do
+          begin
+            c = DataObjects::Connection.new("java:comp/env/jdbc/mydb?driver=#{CONFIG.driver}")
+            c.should_not be_nil
+            test_connection(c).should == 1
+          ensure
+            c.close if c
+          end
         end
       end
     end
