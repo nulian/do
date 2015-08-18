@@ -40,6 +40,7 @@ import org.jruby.RubyTime;
 import org.jruby.javasupport.JavaEmbedUtils;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ByteList;
+import org.jruby.runtime.ThreadContext;
 
 import data_objects.RubyType;
 
@@ -410,7 +411,8 @@ public abstract class AbstractDriverDefinition implements DriverDefinition {
     protected RubyString newUnicodeString(Ruby runtime, String str) {
         RubyString return_str;
         if (runtime.is1_9()){
-            IRubyObject obj = RubyEncoding.getDefaultInternal(RubyString.newEmptyString(runtime));
+            ThreadContext thread_context = runtime.getCurrentContext();
+            IRubyObject obj = RubyEncoding.getDefaultInternal(thread_context, RubyString.newEmptyString(runtime));
             Encoding enc = obj.isNil() ? Encoding.load("UTF8") : ((RubyEncoding) obj).getEncoding();
             ByteList value = new ByteList(RubyEncoding.encodeUTF8(str), false);
             return_str = RubyString.newString(runtime, value);
